@@ -2,7 +2,7 @@
 name: akukiki-telemetry
 description: Connects a Node.js, Python or Go project to akukiki's early-access storage of logs, traces and errors, only with the person's consent, and answers "what broke?" from that data. Use when the user asks to use or install the akukiki-telemetry skill, to send their app's logs or errors to akukiki, or asks what broke in a project already connected.
 metadata:
-  version: "7"
+  version: "8"
 ---
 
 # akukiki-telemetry
@@ -20,7 +20,7 @@ Once a day, compare this file's version (`metadata.version` above) with the site
 ```
 
 - `checked-today`, or no answer (no network, an error, the command refused): go on with this file without a word — never ask the person about the version check, and do not retry it in this conversation.
-- An answer where you can read the `version` of `akukiki-telemetry`: mark the check done with `mkdir -p ~/.config/akukiki && touch ~/.config/akukiki/akukiki-telemetry.checked`. If that version is higher than this file's, tell the person in one sentence that a newer version of this guide is out and that asking for it again by its address gets it; then go on with this file.
+- An answer where you can read the `version` of `akukiki-telemetry`: mark the check done with `mkdir -p ~/.config/akukiki && touch ~/.config/akukiki/akukiki-telemetry.checked`. If that version is higher than this file's, tell the person in one sentence that a newer version of this guide is out and how to get it, then go on with this file. In Claude Code: update the akukiki plugin — in a terminal, `claude plugin marketplace update bookops`, then `claude plugin update akukiki@bookops`; in Hermes: install the skill again.
 
 ## Rules
 
