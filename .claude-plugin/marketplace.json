@@ -1,0 +1,16 @@
+{
+  "description": "Skills for AI agents that look after products in production.",
+  "name": "bookops",
+  "owner": {
+    "name": "akukiki",
+    "url": "https://akukiki.com"
+  },
+  "plugins": [
+    {
+      "category": "productivity",
+      "description": "Production audit in plain words and free error and log monitoring, by akukiki. Only reads your project; sends or changes nothing without your explicit yes.",
+      "name": "akukiki",
+      "source": "./akukiki"
+    }
+  ]
+}

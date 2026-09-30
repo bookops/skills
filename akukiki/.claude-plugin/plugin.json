@@ -1,0 +1,11 @@
+{
+  "author": {
+    "name": "akukiki",
+    "url": "https://akukiki.com"
+  },
+  "description": "Production audit in plain words and free error and log monitoring, by akukiki. Only reads your project; sends or changes nothing without your explicit yes.",
+  "homepage": "https://akukiki.com",
+  "name": "akukiki",
+  "skills": "./skills/",
+  "version": "11.7.0"
+}
