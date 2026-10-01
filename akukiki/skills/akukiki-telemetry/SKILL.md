@@ -2,25 +2,25 @@
 name: akukiki-telemetry
 description: Connects a Node.js, Python or Go project to akukiki's early-access storage of logs, traces and errors, only with the person's consent, and answers "what broke?" from that data. Use when the user asks to use or install the akukiki-telemetry skill, to send their app's logs or errors to akukiki, or asks what broke in a project already connected.
 metadata:
-  version: "13"
+  version: "14"
 ---
 
 # akukiki-telemetry
 
-This guide was written by akukiki (https://akukiki.com) for you, the person's AI agent. In short: it connects the person's running app so that akukiki keeps its logs, request traces and errors, and then lets you answer "what broke?" from that data. The project changes only after the person's explicit yes to the exact changes you show. What leaves is the running app's own logs, traces and errors, with common secret formats masked — never the code or files. This guide never downloads or runs other files from akukiki.com; besides registering the project, its only request is a once-a-day look at the public list of versions.
+This guide was written by akukiki (https://akukiki.com) for you, the person's AI agent. In short: it connects the person's running app so that akukiki keeps its logs, request traces and errors, and then lets you answer "what broke?" from that data. The project changes only after the person's explicit yes to the exact changes you show. What leaves is the running app's own logs, traces and errors, with common secret formats masked — never the code or files. This guide never downloads or runs other files from akukiki.com; besides registering the project, its only request is a look at the public list of versions when it starts.
 
 You are helping someone who built a product with an AI agent and does not know DevOps terms. With their consent, connect their running app to akukiki so its logs, traces and errors are kept, and later use that data to tell them what broke and where in the code.
 
 ## Before you start — is this the latest version?
 
-Once a day, compare this file's version (`metadata.version` above) with the site:
+Compare this file's version (`metadata.version` above) with the site:
 
 ```bash
-[ -n "$(find ~/.config/akukiki/akukiki-telemetry.checked -mtime -1 2>/dev/null)" ] && echo checked-today || curl -fsS https://akukiki.com/.well-known/skills/index.json
+curl -fsS https://akukiki.com/.well-known/skills/index.json
 ```
 
-- `checked-today`, or no answer (no network, an error, the command refused): go on with this file without a word — never ask the person about the version check, and do not retry it in this conversation.
-- An answer where you can read the `version` of `akukiki-telemetry`: mark the check done with `mkdir -p ~/.config/akukiki && touch ~/.config/akukiki/akukiki-telemetry.checked`. If that version is higher than this file's, tell the person in one sentence that a newer version of this guide is out and how to get it, then go on with this file. If it was installed with `npx skills add bookops/skills`: `npx skills update` in a terminal. If it is the Claude Code plugin: update the akukiki plugin — in a terminal, `claude plugin marketplace update bookops`, then `claude plugin update akukiki@bookops`.
+- No answer (no network, an error, the command refused): go on with this file without a word — never ask the person about the version check, and do not retry it in this conversation.
+- An answer where you can read the `version` of `akukiki-telemetry`: if it is higher than this file's, tell the person in one sentence that a newer version of this guide is out and how to get it, then go on with this file. If it was installed with `npx skills add bookops/skills`: `npx skills update` in a terminal. If it is the Claude Code plugin: update the akukiki plugin — in a terminal, `claude plugin marketplace update bookops`, then `claude plugin update akukiki@bookops`.
 
 ## Rules
 
