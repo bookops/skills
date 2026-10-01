@@ -5,7 +5,13 @@ Claude Code plugin with two skills by akukiki (https://akukiki.com):
 - `akukiki` — a production audit of your project in plain words; it only reads the project, and anything it sends or changes needs your explicit yes;
 - `akukiki-telemetry` — connects your app's errors and logs to akukiki, only with your yes.
 
-Install in Claude Code:
+Install into your agent (Claude Code, Codex, Cursor, OpenCode, Gemini CLI, OpenClaw, Hermes and others), in a terminal:
+
+```
+npx skills add bookops/skills
+```
+
+In Claude Code you can install it as a plugin instead, which updates itself:
 
 ```
 /plugin marketplace add bookops/skills

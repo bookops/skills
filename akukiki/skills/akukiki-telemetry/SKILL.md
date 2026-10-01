@@ -2,7 +2,7 @@
 name: akukiki-telemetry
 description: Connects a Node.js, Python or Go project to akukiki's early-access storage of logs, traces and errors, only with the person's consent, and answers "what broke?" from that data. Use when the user asks to use or install the akukiki-telemetry skill, to send their app's logs or errors to akukiki, or asks what broke in a project already connected.
 metadata:
-  version: "8"
+  version: "13"
 ---
 
 # akukiki-telemetry
@@ -20,7 +20,7 @@ Once a day, compare this file's version (`metadata.version` above) with the site
 ```
 
 - `checked-today`, or no answer (no network, an error, the command refused): go on with this file without a word — never ask the person about the version check, and do not retry it in this conversation.
-- An answer where you can read the `version` of `akukiki-telemetry`: mark the check done with `mkdir -p ~/.config/akukiki && touch ~/.config/akukiki/akukiki-telemetry.checked`. If that version is higher than this file's, tell the person in one sentence that a newer version of this guide is out and how to get it, then go on with this file. In Claude Code: update the akukiki plugin — in a terminal, `claude plugin marketplace update bookops`, then `claude plugin update akukiki@bookops`; in Hermes: install the skill again.
+- An answer where you can read the `version` of `akukiki-telemetry`: mark the check done with `mkdir -p ~/.config/akukiki && touch ~/.config/akukiki/akukiki-telemetry.checked`. If that version is higher than this file's, tell the person in one sentence that a newer version of this guide is out and how to get it, then go on with this file. If it was installed with `npx skills add bookops/skills`: `npx skills update` in a terminal. If it is the Claude Code plugin: update the akukiki plugin — in a terminal, `claude plugin marketplace update bookops`, then `claude plugin update akukiki@bookops`.
 
 ## Rules
 
@@ -43,9 +43,10 @@ Explain in plain words, in the user's language, what will leave and why:
 - every request the app answers (HTTP and gRPC): when it came, how long it took, whether it failed — so they see when their services get slower or start failing;
 - the lines the app writes to its log — to see what happened before an error;
 - when the app crashes or a request fails with an error: where and why;
-- for Node.js and Python, also a few basic numbers such as memory use.
+- for Node.js and Python, also a few basic numbers such as memory use;
+- what is masked: common formats of emails, tokens, keys, card numbers and passwords are replaced with `[MASKED]` before anything is stored — not every possible secret, so lines that print secrets should go (step 2).
 
-Nothing disappears from the app's console. What does not leave: the code and the files. Common formats of emails, tokens, keys, card numbers and passwords are replaced with `[MASKED]` before anything is stored — not every possible secret, so lines that print secrets should go (step 2).
+Nothing disappears from the app's console. What does not leave: the code and the files.
 
 Then say where and for how long: on akukiki's server in Uzbekistan; logs, traces and metrics 7 days, error groups 30 days; up to 50 MB a day, free in early access; the full terms are on akukiki.com/<lang>/privacy. And how to stop and delete: remove the changes (step 4 says how) and write to the address on that privacy page.
 
@@ -66,7 +67,7 @@ Ask for their email if you don't know it. Then register so that the answer, whic
 ```bash
 (umask 077; mkdir -p ~/.config/akukiki && curl -sS -o ~/.config/akukiki/registration.json -w '%{http_code}\n' \
   -X POST https://otel.akukiki.com/v1/projects -H 'Content-Type: application/json' \
-  -d '{"email": "<email>", "name": "<short project name>", "lang": "<en | pt | ru | uz>", "agent": "<claude-code | hermes | other>"}')
+  -d '{"email": "<email>", "name": "<short project name>", "lang": "<en | pt | ru | uz>", "agent": "<claude-code | hermes | other>", "code": "<the referral code from the person's message, if it had 'code X', 'código X', 'код X' or 'kod X' — just X; otherwise empty>"}')
 ```
 
 - 201: take what you need from the file with `sed`, never by printing it:
@@ -208,7 +209,11 @@ func akukikiStart(appHandlesSIGTERM bool) (flush func()) {
 			signal.Notify(stop, syscall.SIGTERM)
 			<-stop
 			flush()
-			os.Exit(143) // the code a process killed by SIGTERM reports
+			// Die by SIGTERM as before, not by an exit code: systemd counts only the signal as a clean stop.
+			signal.Reset(syscall.SIGTERM)
+			if self, err := os.FindProcess(os.Getpid()); err == nil {
+				self.Signal(syscall.SIGTERM) // on Windows this is a no-op, and SIGTERM never comes there anyway
+			}
 		}()
 	}
 	return flush
