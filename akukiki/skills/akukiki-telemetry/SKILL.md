@@ -2,7 +2,7 @@
 name: akukiki-telemetry
 description: Connects a Node.js, Python or Go project to akukiki's early-access storage of logs, traces and errors, only with the person's consent, and answers "what broke?" from that data. Use when the user asks to use or install the akukiki-telemetry skill, to send their app's logs or errors to akukiki, or asks what broke in a project already connected.
 metadata:
-  version: "15"
+  version: "16"
 ---
 
 # akukiki-telemetry
@@ -64,7 +64,7 @@ Ask whether they want this. Go on only after an explicit yes.
 
 ## Step 3 — Register
 
-Ask for their email if you don't know it. If step 2 found no site address, ask for it in the same message as the email; they may not know it or not have a site yet — then leave it empty. Show the address you will register before you send it. Then register so that the answer, which holds both tokens, goes straight into a private file and never shows in any output:
+Ask the person for the email to register with; take it only from the person, never from git settings or the project's files. In the message that asks for the email, name the site address step 2 found and say akukiki will open it once a minute, so they can correct it; if step 2 found none, ask for it in the same message as the email — they may not know it or not have a site yet, then leave it empty. Before you send the registration, show the email, the project name and the site address that will go. Then register so that the answer, which holds both tokens, goes straight into a private file and never shows in any output:
 
 ```bash
 (umask 077; mkdir -p ~/.config/akukiki && curl -sS -o ~/.config/akukiki/registration.json -w '%{http_code}\n' \
@@ -337,6 +337,8 @@ The same answer has `"site"`: the address akukiki opens once a minute and whethe
 curl -sS -X PUT https://otel.akukiki.com/api/v1/project -H "Authorization: Bearer $(cat ~/.config/akukiki/$(cat .akukiki-project).token)" \
   -H 'Content-Type: application/json' -d '{"url": "<the address>"}'
 ```
+
+A 503 means the email about the change could not go, so the address stays as it was: tell the person and suggest trying again later.
 
 ## Step 6 — "What broke?"
 
