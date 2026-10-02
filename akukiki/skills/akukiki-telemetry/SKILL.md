@@ -2,7 +2,7 @@
 name: akukiki-telemetry
 description: Connects a Node.js, Python or Go project to akukiki's early-access storage of logs, traces and errors, only with the person's consent, and answers "what broke?" from that data. Use when the user asks to use or install the akukiki-telemetry skill, to send their app's logs or errors to akukiki, or asks what broke in a project already connected.
 metadata:
-  version: "14"
+  version: "15"
 ---
 
 # akukiki-telemetry
@@ -34,7 +34,7 @@ curl -fsS https://akukiki.com/.well-known/skills/index.json
 
 ## Step 0 — Already connected?
 
-If the repository has a `.akukiki-project` file and `~/.config/akukiki/$(cat .akukiki-project).token` exists, this project is connected: go to step 6 to answer questions, or step 7 if a token leaked. Otherwise start at step 1.
+If the repository has a `.akukiki-project` file and `~/.config/akukiki/$(cat .akukiki-project).token` exists, this project is connected: go to step 6 to answer questions, or step 7 if a token leaked — and once in the conversation, look at the site address as step 5 says. Otherwise start at step 1.
 
 ## Step 1 — Tell, then ask
 
@@ -44,7 +44,8 @@ Explain in plain words, in the user's language, what will leave and why:
 - the lines the app writes to its log — to see what happened before an error;
 - when the app crashes or a request fails with an error: where and why;
 - for Node.js and Python, also a few basic numbers such as memory use;
-- what is masked: common formats of emails, tokens, keys, card numbers and passwords are replaced with `[MASKED]` before anything is stored — not every possible secret, so lines that print secrets should go (step 2).
+- what is masked: common formats of emails, tokens, keys, card numbers and passwords are replaced with `[MASKED]` before anything is stored — not every possible secret, so lines that print secrets should go (step 2);
+- if they give the address of their site: akukiki opens it once a minute from its server to check that it answers, and writes to them when it stops answering and when it answers again.
 
 Nothing disappears from the app's console. What does not leave: the code and the files.
 
@@ -59,15 +60,16 @@ Ask whether they want this. Go on only after an explicit yes.
 1. Stack. Supported: Node.js, Python and Go apps that run as their own server process (on a server, in a container, on a PaaS) — not functions on a serverless platform. Node.js and Python are connected by changing how the app starts; Go by a small change in its code, and you say so before step 3. For any other stack say it is not supported yet, and stop without changing anything.
 2. Secrets in logs. Search the code for logging calls that print environment variables, request headers or bodies, passwords, tokens or keys (for example `console.log(process.env`, `print(request.headers`, `logger.info(password`). Show each place you find, file and line, and explain that such lines would send secrets out; the masking catches common formats, not all. Offer to remove them as part of step 4.
 3. Where the production app gets its environment: a systemd unit (`Environment=` or `EnvironmentFile=`), a `.env` file on the server that is not in git, a Docker Compose file on the server, or a hosting dashboard. If you cannot reach production from here, you will give the person the exact lines to add there.
+4. The site's public address, for the check that it answers. Look in the project itself: a Traefik rule (`Host(`shop.example.com`)` in the labels of a Compose file), nginx `server_name`, a Caddyfile, variables named like `APP_URL`, `PUBLIC_URL` or `SITE_URL` in files git tracks (`.env.example`, Compose files — never print `.env` itself), the README, CORS settings in the code. Skip `localhost`, addresses of a private network (`10.…`, `172.16–31.…`, `192.168.…`) and addresses for development. Write it as `https://<domain>/`; a Cyrillic domain goes as it is.
 
 ## Step 3 — Register
 
-Ask for their email if you don't know it. Then register so that the answer, which holds both tokens, goes straight into a private file and never shows in any output:
+Ask for their email if you don't know it. If step 2 found no site address, ask for it in the same message as the email; they may not know it or not have a site yet — then leave it empty. Show the address you will register before you send it. Then register so that the answer, which holds both tokens, goes straight into a private file and never shows in any output:
 
 ```bash
 (umask 077; mkdir -p ~/.config/akukiki && curl -sS -o ~/.config/akukiki/registration.json -w '%{http_code}\n' \
   -X POST https://otel.akukiki.com/v1/projects -H 'Content-Type: application/json' \
-  -d '{"email": "<email>", "name": "<short project name>", "lang": "<en | pt | ru | uz>", "agent": "<claude-code | hermes | other>", "code": "<the referral code from the person's message, if it had 'code X', 'código X', 'код X' or 'kod X' — just X; otherwise empty>"}')
+  -d '{"email": "<email>", "name": "<short project name>", "lang": "<en | pt | ru | uz>", "agent": "<claude-code | hermes | other>", "code": "<the referral code from the person's message, if it had 'code X', 'código X', 'код X' or 'kod X' — just X; otherwise empty>", "url": "<the site address from step 2 or from the person, like https://shop.example.com/; empty if none>"}')
 ```
 
 - 201: take what you need from the file with `sed`, never by printing it:
@@ -80,7 +82,7 @@ Ask for their email if you don't know it. Then register so that the answer, whic
   ```
 
   `.akukiki-project` holds only the project id, which is not a secret: commit it — it tells step 0 which token belongs to this project. The write token stays in `registration.json` until step 4 puts it into the production environment. Tell the person to open the email from akukiki and click the link: nothing is accepted until they do.
-- 400: fix the field named in the answer and ask again before resending.
+- 400: fix the field named in the answer and ask again before resending. An answer about the `url` means akukiki cannot check that address (a login in it, another port, an address outside the internet): say why in plain words and ask for another one, or register without it.
 - 403 "no seats left": early access is full; tell them and stop.
 - 429 or 5xx: tell them it did not go through and suggest trying later.
 
@@ -325,9 +327,16 @@ When they have clicked the link and the app has run a few minutes:
 curl -sS https://otel.akukiki.com/api/v1/usage -H "Authorization: Bearer $(cat ~/.config/akukiki/$(cat .akukiki-project).token)"
 ```
 
-- `status` is `active` and `today` has bytes: tell them it works, and that they can see their projects, errors and usage themselves in the cabinet at https://my.akukiki.com — they sign in with the project's email and a code from the mail.
+- `status` is `active` and `today` has bytes: tell them it works, and that they can see their projects, errors and usage themselves in the cabinet at https://my.akukiki.com — they sign in with the project's email and a code from the mail. On the project's page there, the button “Connect Telegram” (in Russian «Подключить Telegram») sends the same alerts to a Telegram chat as well; say so in their language.
 - 403 "confirm your email": remind them about the link.
 - Nothing after 5 minutes: check that the app was restarted with the new environment, on the right server, that the server may make outgoing HTTPS requests, and look in the app's own output for 401 answers (wrong token).
+
+The same answer has `"site"`: the address akukiki opens once a minute and whether it answers. If its `url` is empty, offer to add the site's address (step 2 says where to find it) and explain the check in one sentence. After a yes, send it — the person gets an email about the change:
+
+```bash
+curl -sS -X PUT https://otel.akukiki.com/api/v1/project -H "Authorization: Bearer $(cat ~/.config/akukiki/$(cat .akukiki-project).token)" \
+  -H 'Content-Type: application/json' -d '{"url": "<the address>"}'
+```
 
 ## Step 6 — "What broke?"
 
